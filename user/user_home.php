@@ -1,0 +1,634 @@
+<?php
+session_start();
+require_once '../connetionDB/config.php';
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Get user details
+$user_id = $_SESSION['user_id'];
+$user_query = "SELECT * FROM users WHERE id = $user_id";
+$user_result = mysqli_query($conn, $user_query);
+$user = mysqli_fetch_assoc($user_result);
+
+// Get all available products
+$products_query = "SELECT p.*, c.name as category_name 
+                  FROM products p 
+                  LEFT JOIN categories c ON p.category_id = c.id 
+                  WHERE p.available = TRUE";
+$products_result = mysqli_query($conn, $products_query);
+$products = mysqli_fetch_all($products_result, MYSQLI_ASSOC);
+
+// Get categories for filtering
+$categories_query = "SELECT * FROM categories";
+$categories_result = mysqli_query($conn, $categories_query);
+$categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cafeteria - Home</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --accent-color: #fd79a8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+        }
+        
+        body {
+            background-color: #f5f6fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: white !important;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .product-img {
+            height: 180px;
+            object-fit: cover;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        
+        .badge-category {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .order-summary {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 20px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #5649d2;
+            border-color: #5649d2;
+        }
+        
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            border: none;
+        }
+        
+        .quantity-input {
+            width: 50px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .latest-orders {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="user_home.php">Cafeteria</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="user_home.php">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="my_orders.php">My Orders</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span class="text-white me-3">Welcome, <?php echo htmlspecialchars($user['name']); ?></span>
+                    <a href="logout.php" class="btn btn-outline-light">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+        <div class="row">
+            <!-- Main Content Area -->
+            <div class="col-lg-8">
+                <!-- Category Filter -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Filter by Category</h5>
+                        <div class="d-flex flex-wrap">
+                            <button class="btn btn-sm btn-outline-secondary me-2 mb-2 filter-btn" data-category="all">All</button>
+                            <?php foreach ($categories as $category): ?>
+                                <button class="btn btn-sm btn-outline-secondary me-2 mb-2 filter-btn" data-category="<?php echo $category['id']; ?>">
+                                    <?php echo htmlspecialchars($category['name']); ?>
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                <div class="row" id="products-container">
+                    <?php foreach ($products as $product): ?>
+                        <div class="col-md-4 mb-4 product-item" data-category="<?php echo $product['category_id'] ?? '0'; ?>">
+                            <div class="card h-100">
+                            <img src="<?php echo 'http://localhost/php_project/' . htmlspecialchars($product['image']); ?>" class="card-img-top product-img" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                            <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h5 class="card-title mb-1"><?php echo htmlspecialchars($product['name']); ?></h5>
+                                        <span class="badge bg-primary"><?php echo htmlspecialchars($product['price']); ?> EGP</span>
+                                    </div>
+                                    <?php if (!empty($product['category_name'])): ?>
+                                        <span class="badge badge-category mb-2"><?php echo htmlspecialchars($product['category_name']); ?></span>
+                                    <?php endif; ?>
+                                    <div class="d-flex align-items-center mt-3">
+                                        <button class="quantity-btn minus-btn" data-product="<?php echo $product['id']; ?>">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" class="quantity-input mx-2" id="quantity-<?php echo $product['id']; ?>" value="0" min="0">
+                                        <button class="quantity-btn plus-btn" data-product="<?php echo $product['id']; ?>">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div class="mt-2">
+                                        <textarea class="form-control form-control-sm note-input" id="note-<?php echo $product['id']; ?>" rows="2" placeholder="Add note (e.g., extra sugar)"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+         <!-- Order Summary Sidebar -->
+<div class="col-lg-4">
+    <div class="order-summary p-4 mb-4">
+        <h4 class="mb-4 d-flex justify-content-between align-items-center">
+            <span>Order Summary</span>
+            <span class="badge bg-primary" id="item-count">0 items</span>
+        </h4>
+        
+        <!-- Selected Items List -->
+        <div id="selected-items" class="mb-3" style="max-height: 300px; overflow-y: auto;">
+            <div class="text-center py-3 text-muted">
+                <i class="fas fa-shopping-basket fa-2x mb-2"></i>
+                <p>Your basket is empty</p>
+            </div>
+        </div>
+        
+        <hr>
+        
+        <!-- Total Price -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Total Amount:</h5>
+            <h4 class="mb-0 text-primary" id="total-price">0.00 EGP</h4>
+        </div>
+        
+        <!-- Room Selection -->
+        <div class="mb-3">
+            <label for="room-select" class="form-label fw-bold">Select Room</label>
+            <select class="form-select form-select-lg" id="room-select" required>
+                <option value="" disabled selected>Choose your room</option>
+                <?php 
+                // Generate room options (2010-2030 as example)
+                for ($i = 2010; $i <= 2030; $i++) {
+                    $selected = ($i == $user['room_number']) ? 'selected' : '';
+                    echo "<option value='$i' $selected>Room $i</option>";
+                }
+                ?>
+            </select>
+        </div>
+        
+        <!-- Confirm Order Button -->
+        <button class="btn btn-primary btn-lg w-100 py-3 fw-bold" id="confirm-order">
+            <i class="fas fa-paper-plane me-2"></i> Confirm Order
+        </button>
+    </div>
+    
+    <!-- Latest Orders Section -->
+    <div class="latest-orders p-4">
+        <h5 class="mb-3 d-flex justify-content-between align-items-center">
+            <span>Latest Orders</span>
+            <a href="my_orders.php" class="btn btn-sm btn-outline-primary">View All</a>
+        </h5>
+        
+        <div id="latest-orders-list">
+            <?php
+            // Get latest 3 orders for the user
+            $orders_query = "SELECT o.id, o.total_price, o.status, o.created_at, 
+                            COUNT(oi.id) as item_count
+                            FROM orders o
+                            LEFT JOIN order_items oi ON o.id = oi.order_id
+                            WHERE o.user_id = $user_id
+                            GROUP BY o.id
+                            ORDER BY o.created_at DESC 
+                            LIMIT 3";
+            $orders_result = mysqli_query($conn, $orders_query);
+            
+            if (mysqli_num_rows($orders_result) === 0) {
+                echo '<div class="text-center py-3 text-muted">
+                        <i class="fas fa-clock fa-2x mb-2"></i>
+                        <p>No recent orders</p>
+                      </div>';
+            } else {
+                while ($order = mysqli_fetch_assoc($orders_result)) {
+                    $status_class = 'text-warning';
+                    $status_icon = 'fa-spinner';
+                    if ($order['status'] == 'out for delivery') {
+                        $status_class = 'text-info';
+                        $status_icon = 'fa-truck';
+                    } elseif ($order['status'] == 'done') {
+                        $status_class = 'text-success';
+                        $status_icon = 'fa-check-circle';
+                    }
+                    
+                    echo '<div class="order-card mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold">#' . $order['id'] . '</span>
+                                <span class="badge bg-light text-dark">
+                                    ' . $order['item_count'] . ' ' . ($order['item_count'] == 1 ? 'item' : 'items') . '
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span><i class="far fa-calendar-alt me-2"></i>' . date('M j, Y g:i A', strtotime($order['created_at'])) . '</span>
+                                <span class="fw-bold">' . number_format($order['total_price'], 2) . ' EGP</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="' . $status_class . '">
+                                    <i class="fas ' . $status_icon . ' me-2"></i>' . ucfirst($order['status']) . '
+                                </span>';
+                    
+                    if ($order['status'] == 'processing') {
+                        echo '<button class="btn btn-sm btn-outline-danger cancel-order" data-order="' . $order['id'] . '">
+                                <i class="fas fa-times me-1"></i> Cancel
+                              </button>';
+                    }
+                    
+                    echo '</div>
+                          </div>';
+                }
+            }
+            ?>
+        </div>
+    </div>
+</div>
+    <!-- jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+    $(document).ready(function() {
+        // Initialize empty cart
+        let cart = [];
+        
+        // Category filter (unchanged from previous)
+        $('.filter-btn').click(function() {
+            const category = $(this).data('category');
+            $('.filter-btn').removeClass('active');
+            $(this).addClass('active');
+            
+            if (category === 'all') {
+                $('.product-item').show();
+            } else {
+                $('.product-item').hide();
+                $(`.product-item[data-category="${category}"]`).show();
+            }
+        });
+        
+        // Quantity controls with cart management
+        $('.plus-btn').click(function() {   
+            const productId = $(this).data('product');
+            const input = $(`#quantity-${productId}`);
+            input.val(parseInt(input.val()) + 1);
+            updateCart(productId, parseInt(input.val()), $(`#note-${productId}`).val());
+            updateOrderSummary();
+        });
+        
+        $('.minus-btn').click(function() {
+            const productId = $(this).data('product');
+            const input = $(`#quantity-${productId}`);
+            const newQuantity = parseInt(input.val()) - 1;
+            input.val(newQuantity >= 0 ? newQuantity : 0);
+            updateCart(productId, newQuantity >= 0 ? newQuantity : 0, $(`#note-${productId}`).val());
+            updateOrderSummary();
+        });
+        
+        $('.quantity-input').change(function() {
+            const productId = $(this).attr('id').replace('quantity-', '');
+            const quantity = parseInt($(this).val()) >= 0 ? parseInt($(this).val()) : 0;
+            $(this).val(quantity);
+            updateCart(productId, quantity, $(`#note-${productId}`).val());
+            updateOrderSummary();
+        });
+        
+        $('.note-input').on('input', function() {
+            const productId = $(this).attr('id').replace('note-', '');
+            const quantity = parseInt($(`#quantity-${productId}`).val()) || 0;
+            if (quantity > 0) {
+                updateCart(productId, quantity, $(this).val());
+                updateOrderSummary();
+            }
+        });
+        
+        // Update cart array
+        function updateCart(productId, quantity, note) {
+            // Get product details
+            const productCard = $(`.product-item[data-category="${productId}"]`);
+            const productName = productCard.find('.card-title').text();
+            const productPrice = parseFloat(productCard.find('.badge').text().split(' ')[0]);
+            const productImage = productCard.find('.product-img').attr('src');
+            
+            // Find if product already in cart
+            const existingItemIndex = cart.findIndex(item => item.productId == productId);
+            
+            if (quantity > 0) {
+                const cartItem = {
+                    productId: productId,
+                    name: productName,
+                    price: productPrice,
+                    quantity: quantity,
+                    note: note,
+                    image: productImage
+                };
+                
+                if (existingItemIndex >= 0) {
+                    cart[existingItemIndex] = cartItem;
+                } else {
+                    cart.push(cartItem);
+                }
+            } else if (existingItemIndex >= 0) {
+                cart.splice(existingItemIndex, 1);
+            }
+        }
+        
+        // Update order summary display
+        function updateOrderSummary() {
+            let total = 0;
+            let itemCount = 0;
+            
+            // Generate items HTML
+            let itemsHtml = '';
+            
+            if (cart.length > 0) {
+                cart.forEach(item => {
+                    total += item.quantity * item.price;
+                    itemCount += item.quantity;
+                    
+                    itemsHtml += `
+                        <div class="cart-item mb-3 pb-2 border-bottom">
+                            <div class="d-flex align-items-start">
+                                <img src="${item.image}" class="rounded me-3" width="60" height="60" style="object-fit: cover">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="mb-1">${item.name}</h6>
+                                        <span class="text-primary fw-bold">${(item.quantity * item.price).toFixed(2)} EGP</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">${item.price.toFixed(2)} EGP each</small>
+                                        <div class="quantity-controls">
+                                            <button class="btn btn-sm btn-outline-secondary minus-summary" data-product="${item.productId}">
+                                                <i class="fas fa-minus"></i>
+                                            </button>
+                                            <span class="mx-2">${item.quantity}</span>
+                                            <button class="btn btn-sm btn-outline-secondary plus-summary" data-product="${item.productId}">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    ${item.note ? `<div class="mt-1 small text-muted"><i class="fas fa-comment-alt me-1"></i>${item.note}</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                itemsHtml = `
+                    <div class="text-center py-3 text-muted">
+                        <i class="fas fa-shopping-basket fa-2x mb-2"></i>
+                        <p>Your basket is empty</p>
+                    </div>
+                `;
+            }
+            
+            // Update DOM
+            $('#selected-items').html(itemsHtml);
+            $('#total-price').text(total.toFixed(2) + ' EGP');
+            $('#item-count').text(itemCount + ' ' + (itemCount === 1 ? 'item' : 'items'));
+            
+            // Enable/disable confirm button
+            $('#confirm-order').prop('disabled', cart.length === 0);
+        }
+        
+        // Handle quantity changes from summary
+        $(document).on('click', '.plus-summary', function() {
+            const productId = $(this).data('product');
+            const input = $(`#quantity-${productId}`);
+            input.val(parseInt(input.val()) + 1);
+            updateCart(productId, parseInt(input.val()), $(`#note-${productId}`).val());
+            updateOrderSummary();
+        });
+        
+        $(document).on('click', '.minus-summary', function() {
+            const productId = $(this).data('product');
+            const input = $(`#quantity-${productId}`);
+            const newQuantity = parseInt(input.val()) - 1;
+            input.val(newQuantity >= 0 ? newQuantity : 0);
+            updateCart(productId, newQuantity >= 0 ? newQuantity : 0, $(`#note-${productId}`).val());
+            updateOrderSummary();
+        });
+        
+        // Confirm order
+        $('#confirm-order').click(function() {
+            const room = $('#room-select').val();
+            
+            if (!room) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Room Required',
+                    text: 'Please select your room number',
+                    confirmButtonColor: '#6c5ce7'
+                });
+                $('#room-select').focus();
+                return;
+            }
+            
+            if (cart.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Empty Order',
+                    text: 'Please add at least one item to your order',
+                    confirmButtonColor: '#6c5ce7'
+                });
+                return;
+            }
+            
+            // Calculate total price
+            let totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            // Submit order via AJAX
+            $.ajax({
+                url: 'process_order.php',
+                method: 'POST',
+                data: {
+                    room: room,
+                    items: JSON.stringify(cart),
+                    total_price: totalPrice
+                },
+                beforeSend: function() {
+                    $('#confirm-order').html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...');
+                    $('#confirm-order').prop('disabled', true);
+                },
+                success: function(response) {
+                    try {
+                        const result = JSON.parse(response);
+                        if (result.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Order Placed!',
+                                text: 'Your order has been submitted successfully',
+                                confirmButtonColor: '#6c5ce7'
+                            }).then(() => {
+                                // Reset form and cart
+                                $('.quantity-input').val(0);
+                                $('.note-input').val('');
+                                cart = [];
+                                updateOrderSummary();
+                                location.reload(); // Refresh to show new order in latest orders
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: result.message || 'Failed to place order',
+                                confirmButtonColor: '#6c5ce7'
+                            });
+                        }
+                    } catch (e) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Invalid server response',
+                            confirmButtonColor: '#6c5ce7'
+                        });
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to submit order. Please try again.',
+                        confirmButtonColor: '#6c5ce7'
+                    });
+                },
+                complete: function() {
+                    $('#confirm-order').html('<i class="fas fa-paper-plane me-2"></i> Confirm Order');
+                    $('#confirm-order').prop('disabled', false);
+                }
+            });
+        });
+        
+        // Cancel order with SweetAlert
+        $(document).on('click', '.cancel-order', function(e) {
+            e.preventDefault();
+            const orderId = $(this).data('order');
+            
+            Swal.fire({
+                title: 'Cancel Order?',
+                text: "Are you sure you want to cancel this order?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#6c5ce7',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, cancel it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'cancel_order.php',
+                        method: 'POST',
+                        data: { order_id: orderId },
+                        beforeSend: function() {
+                            $(`.cancel-order[data-order="${orderId}"]`).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>');
+                        },
+                        success: function(response) {
+                            const result = JSON.parse(response);
+                            if (result.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Cancelled!',
+                                    text: 'Your order has been cancelled',
+                                    confirmButtonColor: '#6c5ce7'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: result.message || 'Failed to cancel order',
+                                    confirmButtonColor: '#6c5ce7'
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
