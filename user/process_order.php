@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config.php';
+require_once '../connetionDB/config.php';
 
 header('Content-Type: application/json');
 
@@ -9,13 +9,13 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
+$user_id = $_POST['user_id'];
 $room = $_POST['room'];
 $items = json_decode($_POST['items'], true);
 $total_price = $_POST['total_price'];
 
 // Validate input
-if (empty($room) {
+if (empty($room)) {
     echo json_encode(['success' => false, 'message' => 'Room number is required']);
     exit();
 }
@@ -30,9 +30,9 @@ mysqli_begin_transaction($conn);
 
 try {
     // Create order
-    $order_query = "INSERT INTO orders (user_id, total_price, status) VALUES (?, ?, 'processing')";
+    $order_query = "INSERT INTO orders (user_id, room_number, total_price, status) VALUES (?, ?, ?, 'processing')";
     $stmt = mysqli_prepare($conn, $order_query);
-    mysqli_stmt_bind_param($stmt, 'id', $user_id, $total_price);
+    mysqli_stmt_bind_param($stmt, 'isd', $user_id, $room, $total_price);
     mysqli_stmt_execute($stmt);
     $order_id = mysqli_insert_id($conn);
     
@@ -45,7 +45,7 @@ try {
         mysqli_stmt_execute($stmt);
     }
     
-    // Update user's room number if changed
+    // Update user's room number
     $update_user = "UPDATE users SET room_number = ? WHERE id = ?";
     $stmt = mysqli_prepare($conn, $update_user);
     mysqli_stmt_bind_param($stmt, 'si', $room, $user_id);
@@ -54,7 +54,7 @@ try {
     // Commit transaction
     mysqli_commit($conn);
     
-    echo json_encode(['success' => true, 'message' => 'Order placed successfully']);
+    echo json_encode(['success' => true, 'message' => 'Order placed successfully', 'order_id' => $order_id]);
 } catch (Exception $e) {
     // Rollback transaction on error
     mysqli_rollback($conn);

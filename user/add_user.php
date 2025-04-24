@@ -1,9 +1,9 @@
 <?php
-include '../connetionDB/config.php'; // ملف الاتصال بقاعدة البيانات
+include '../connetionDB/config.php'; 
 
 $name        = 'Salma Hussein';
 $email       = 's@gmail.com';
-$password    = password_hash('s12345', PASSWORD_DEFAULT); // تشفير آمن
+$password    = password_hash('s12345', PASSWORD_DEFAULT);
 $room_number = '101';
 $image       = 'salma.jpg';
 $role        = 'user';
@@ -15,8 +15,8 @@ $stmt = $conn->prepare($sql);
 $stmt->bind_param("ssssss", $name, $email, $password, $room_number, $image, $role);
 
 if ($stmt->execute()) {
-    echo "تمت الإضافة بنجاح";
+     echo "added succsfully";
 } else {
-    echo "خطأ: " . $stmt->error;
+    echo "error " . $stmt->error;
 }
 ?>

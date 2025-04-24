@@ -183,34 +183,39 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
 
                 <!-- Products Grid -->
                 <div class="row" id="products-container">
-                    <?php foreach ($products as $product): ?>
-                        <div class="col-md-4 mb-4 product-item" data-category="<?php echo $product['category_id'] ?? '0'; ?>">
-                            <div class="card h-100">
-                            <img src="<?php echo 'http://localhost/php_project/' . htmlspecialchars($product['image']); ?>" class="card-img-top product-img" alt="<?php echo htmlspecialchars($product['name']); ?>">
-                            <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <h5 class="card-title mb-1"><?php echo htmlspecialchars($product['name']); ?></h5>
-                                        <span class="badge bg-primary"><?php echo htmlspecialchars($product['price']); ?> EGP</span>
-                                    </div>
-                                    <?php if (!empty($product['category_name'])): ?>
-                                        <span class="badge badge-category mb-2"><?php echo htmlspecialchars($product['category_name']); ?></span>
-                                    <?php endif; ?>
-                                    <div class="d-flex align-items-center mt-3">
-                                        <button class="quantity-btn minus-btn" data-product="<?php echo $product['id']; ?>">
-                                            <i class="fas fa-minus"></i>
-                                        </button>
-                                        <input type="number" class="quantity-input mx-2" id="quantity-<?php echo $product['id']; ?>" value="0" min="0">
-                                        <button class="quantity-btn plus-btn" data-product="<?php echo $product['id']; ?>">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                    <div class="mt-2">
-                                        <textarea class="form-control form-control-sm note-input" id="note-<?php echo $product['id']; ?>" rows="2" placeholder="Add note (e.g., extra sugar)"></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
+                <?php foreach ($products as $product): ?>
+<div class="col-md-4 mb-4 product-item" 
+     data-category="<?php echo $product['category_id'] ?? '0'; ?>"
+     data-product-id="<?php echo $product['id']; ?>"
+     data-product-price="<?php echo number_format($product['price'], 2, '.', ''); ?>">
+    <div class="card h-100">
+        <img src="<?php echo 'http://localhost/php_project/' . htmlspecialchars($product['image']); ?>" class="card-img-top product-img">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <h5 class="card-title mb-1"><?php echo htmlspecialchars($product['name']); ?></h5>
+                <span class="badge bg-primary price-display">
+                    <?php echo number_format($product['price'], 2); ?> EGP
+                </span>
+            </div>
+            <?php if (!empty($product['category_name'])): ?>
+                <span class="badge badge-category mb-2"><?php echo htmlspecialchars($product['category_name']); ?></span>
+            <?php endif; ?>
+            <div class="d-flex align-items-center mt-3">
+                <button class="quantity-btn minus-btn" data-product="<?php echo $product['id']; ?>">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <input type="number" class="quantity-input mx-2" id="quantity-<?php echo $product['id']; ?>" value="0" min="0">
+                <button class="quantity-btn plus-btn" data-product="<?php echo $product['id']; ?>">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div class="mt-2">
+                <textarea class="form-control form-control-sm note-input" id="note-<?php echo $product['id']; ?>" rows="2" placeholder="Add note (e.g., extra sugar)"></textarea>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endforeach; ?>
                 </div>
             </div>
 
@@ -333,302 +338,256 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
     <!-- Custom JavaScript -->
     <script>
     $(document).ready(function() {
-        // Initialize empty cart
-        let cart = [];
+    let cart = [];
+    
+    // Category filter
+    $('.filter-btn').click(function() {
+        const category = $(this).data('category');
+        $('.filter-btn').removeClass('active');
+        $(this).addClass('active');
         
-        // Category filter (unchanged from previous)
-        $('.filter-btn').click(function() {
-            const category = $(this).data('category');
-            $('.filter-btn').removeClass('active');
-            $(this).addClass('active');
-            
-            if (category === 'all') {
-                $('.product-item').show();
-            } else {
-                $('.product-item').hide();
-                $(`.product-item[data-category="${category}"]`).show();
-            }
-        });
-        
-        // Quantity controls with cart management
-        $('.plus-btn').click(function() {   
-            const productId = $(this).data('product');
-            const input = $(`#quantity-${productId}`);
-            input.val(parseInt(input.val()) + 1);
-            updateCart(productId, parseInt(input.val()), $(`#note-${productId}`).val());
-            updateOrderSummary();
-        });
-        
-        $('.minus-btn').click(function() {
-            const productId = $(this).data('product');
-            const input = $(`#quantity-${productId}`);
-            const newQuantity = parseInt(input.val()) - 1;
-            input.val(newQuantity >= 0 ? newQuantity : 0);
-            updateCart(productId, newQuantity >= 0 ? newQuantity : 0, $(`#note-${productId}`).val());
-            updateOrderSummary();
-        });
-        
-        $('.quantity-input').change(function() {
-            const productId = $(this).attr('id').replace('quantity-', '');
-            const quantity = parseInt($(this).val()) >= 0 ? parseInt($(this).val()) : 0;
-            $(this).val(quantity);
-            updateCart(productId, quantity, $(`#note-${productId}`).val());
-            updateOrderSummary();
-        });
-        
-        $('.note-input').on('input', function() {
-            const productId = $(this).attr('id').replace('note-', '');
-            const quantity = parseInt($(`#quantity-${productId}`).val()) || 0;
-            if (quantity > 0) {
-                updateCart(productId, quantity, $(this).val());
-                updateOrderSummary();
-            }
-        });
-        
-        // Update cart array
-        function updateCart(productId, quantity, note) {
-            // Get product details
-            const productCard = $(`.product-item[data-category="${productId}"]`);
-            const productName = productCard.find('.card-title').text();
-            const productPrice = parseFloat(productCard.find('.badge').text().split(' ')[0]);
-            const productImage = productCard.find('.product-img').attr('src');
-            
-            // Find if product already in cart
-            const existingItemIndex = cart.findIndex(item => item.productId == productId);
-            
-            if (quantity > 0) {
-                const cartItem = {
-                    productId: productId,
-                    name: productName,
-                    price: productPrice,
-                    quantity: quantity,
-                    note: note,
-                    image: productImage
-                };
-                
-                if (existingItemIndex >= 0) {
-                    cart[existingItemIndex] = cartItem;
-                } else {
-                    cart.push(cartItem);
-                }
-            } else if (existingItemIndex >= 0) {
-                cart.splice(existingItemIndex, 1);
-            }
+        if (category === 'all') {
+            $('.product-item').show();
+        } else {
+            $('.product-item').hide();
+            $(`.product-item[data-category="${category}"]`).show();
         }
+    });
+    
+    // Plus button
+    $('.plus-btn').click(function() {
+        const productId = $(this).data('product');
+        const productCard = $(this).closest('.product-item');
+        const productPrice = parseFloat(productCard.data('product-price'));
+        const input = $(`#quantity-${productId}`);
+        input.val(parseInt(input.val()) + 1);
+        updateCart(productId, productPrice, parseInt(input.val()), $(`#note-${productId}`).val());
+        updateOrderSummary();
+    });
+    
+    // Minus button
+    $('.minus-btn').click(function() {
+        const productId = $(this).data('product');
+        const productCard = $(this).closest('.product-item');
+        const productPrice = parseFloat(productCard.data('product-price'));
+        const input = $(`#quantity-${productId}`);
+        const newQty = Math.max(parseInt(input.val()) - 1, 0);
+        input.val(newQty);
+        updateCart(productId, productPrice, newQty, $(`#note-${productId}`).val());
+        updateOrderSummary();
+    });
+    
+    // Quantity input change
+    $('.quantity-input').change(function() {
+        const productId = $(this).attr('id').replace('quantity-', '');
+        const productCard = $(this).closest('.product-item');
+        const productPrice = parseFloat(productCard.data('product-price'));
+        const newQty = Math.max(parseInt($(this).val()) || 0, 0);
+        $(this).val(newQty);
+        updateCart(productId, productPrice, newQty, $(`#note-${productId}`).val());
+        updateOrderSummary();
+    });
+    
+    // Note input change
+    $('.note-input').on('input', function() {
+        const productId = $(this).attr('id').replace('note-', '');
+        const quantity = parseInt($(`#quantity-${productId}`).val()) || 0;
+        if (quantity > 0) {
+            const productCard = $(this).closest('.product-item');
+            const productPrice = parseFloat(productCard.data('product-price'));
+            updateCart(productId, productPrice, quantity, $(this).val());
+            updateOrderSummary();
+        }
+    });
+    
+    // Update cart
+    function updateCart(productId, price, quantity, note) {
+        const productCard = $(`.product-item[data-product-id="${productId}"]`);
+        const productName = productCard.find('.card-title').text();
+        const productImage = productCard.find('.product-img').attr('src');
         
-        // Update order summary display
-        function updateOrderSummary() {
-            let total = 0;
-            let itemCount = 0;
+        const existingItemIndex = cart.findIndex(item => item.productId == productId);
+        
+        if (quantity > 0) {
+            const cartItem = {
+                productId: productId,
+                name: productName,
+                price: price,
+                quantity: quantity,
+                note: note,
+                image: productImage
+            };
             
-            // Generate items HTML
-            let itemsHtml = '';
+            if (existingItemIndex >= 0) {
+                cart[existingItemIndex] = cartItem;
+            } else {
+                cart.push(cartItem);
+            }
+        } else if (existingItemIndex >= 0) {
+            cart.splice(existingItemIndex, 1);
+        }
+    }
+    
+    // Update order summary
+    function updateOrderSummary() {
+        let total = 0;
+        let itemsHtml = '';
+        
+        cart.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            total += itemTotal;
             
-            if (cart.length > 0) {
-                cart.forEach(item => {
-                    total += item.quantity * item.price;
-                    itemCount += item.quantity;
-                    
-                    itemsHtml += `
-                        <div class="cart-item mb-3 pb-2 border-bottom">
-                            <div class="d-flex align-items-start">
-                                <img src="${item.image}" class="rounded me-3" width="60" height="60" style="object-fit: cover">
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <h6 class="mb-1">${item.name}</h6>
-                                        <span class="text-primary fw-bold">${(item.quantity * item.price).toFixed(2)} EGP</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-muted">${item.price.toFixed(2)} EGP each</small>
-                                        <div class="quantity-controls">
-                                            <button class="btn btn-sm btn-outline-secondary minus-summary" data-product="${item.productId}">
-                                                <i class="fas fa-minus"></i>
-                                            </button>
-                                            <span class="mx-2">${item.quantity}</span>
-                                            <button class="btn btn-sm btn-outline-secondary plus-summary" data-product="${item.productId}">
-                                                <i class="fas fa-plus"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    ${item.note ? `<div class="mt-1 small text-muted"><i class="fas fa-comment-alt me-1"></i>${item.note}</div>` : ''}
+            itemsHtml += `
+                <div class="cart-item mb-3 pb-2 border-bottom">
+                    <div class="d-flex align-items-start">
+                        <img src="${item.image}" class="rounded me-3" width="60" height="60" style="object-fit: cover">
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="mb-1">${item.name}</h6>
+                                <span class="text-primary fw-bold">${itemTotal.toFixed(2)} EGP</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">${item.price.toFixed(2)} EGP each</small>
+                                <div class="quantity-controls">
+                                    <button class="btn btn-sm btn-outline-secondary minus-summary" data-product="${item.productId}">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <span class="mx-2">${item.quantity}</span>
+                                    <button class="btn btn-sm btn-outline-secondary plus-summary" data-product="${item.productId}">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
                                 </div>
                             </div>
+                            ${item.note ? `<div class="mt-1 small text-muted"><i class="fas fa-comment-alt me-1"></i>${item.note}</div>` : ''}
                         </div>
-                    `;
-                });
-            } else {
-                itemsHtml = `
-                    <div class="text-center py-3 text-muted">
-                        <i class="fas fa-shopping-basket fa-2x mb-2"></i>
-                        <p>Your basket is empty</p>
                     </div>
-                `;
-            }
-            
-            // Update DOM
-            $('#selected-items').html(itemsHtml);
-            $('#total-price').text(total.toFixed(2) + ' EGP');
-            $('#item-count').text(itemCount + ' ' + (itemCount === 1 ? 'item' : 'items'));
-            
-            // Enable/disable confirm button
-            $('#confirm-order').prop('disabled', cart.length === 0);
+                </div>
+            `;
+        });
+        
+        if (cart.length === 0) {
+            itemsHtml = `
+                <div class="text-center py-3 text-muted">
+                    <i class="fas fa-shopping-basket fa-2x mb-2"></i>
+                    <p>Your basket is empty</p>
+                </div>
+            `;
         }
         
-        // Handle quantity changes from summary
-        $(document).on('click', '.plus-summary', function() {
-            const productId = $(this).data('product');
-            const input = $(`#quantity-${productId}`);
-            input.val(parseInt(input.val()) + 1);
-            updateCart(productId, parseInt(input.val()), $(`#note-${productId}`).val());
-            updateOrderSummary();
-        });
+        $('#selected-items').html(itemsHtml);
+        $('#total-price').text(total.toFixed(2) + ' EGP');
+        $('#item-count').text(cart.reduce((sum, item) => sum + item.quantity, 0) + ' ' + (cart.reduce((sum, item) => sum + item.quantity, 0) === 1 ? 'item' : 'items'));
         
-        $(document).on('click', '.minus-summary', function() {
-            const productId = $(this).data('product');
-            const input = $(`#quantity-${productId}`);
-            const newQuantity = parseInt(input.val()) - 1;
-            input.val(newQuantity >= 0 ? newQuantity : 0);
-            updateCart(productId, newQuantity >= 0 ? newQuantity : 0, $(`#note-${productId}`).val());
-            updateOrderSummary();
-        });
+        $('#confirm-order').prop('disabled', cart.length === 0);
+    }
+    
+    // Handle quantity changes from summary
+    $(document).on('click', '.plus-summary', function() {
+        const productId = $(this).data('product');
+        const input = $(`#quantity-${productId}`);
+        input.val(parseInt(input.val()) + 1);
+        const productCard = $(`.product-item[data-product-id="${productId}"]`);
+        const productPrice = parseFloat(productCard.data('product-price'));
+        updateCart(productId, productPrice, parseInt(input.val()), $(`#note-${productId}`).val());
+        updateOrderSummary();
+    });
+    
+    $(document).on('click', '.minus-summary', function() {
+        const productId = $(this).data('product');
+        const input = $(`#quantity-${productId}`);
+        const newQty = Math.max(parseInt(input.val()) - 1, 0);
+        input.val(newQty);
+        const productCard = $(`.product-item[data-product-id="${productId}"]`);
+        const productPrice = parseFloat(productCard.data('product-price'));
+        updateCart(productId, productPrice, newQty, $(`#note-${productId}`).val());
+        updateOrderSummary();
+    });
+    
+    // Confirm order
+    $('#confirm-order').click(function() {
+        const room = $('#room-select').val();
         
-        // Confirm order
-        $('#confirm-order').click(function() {
-            const room = $('#room-select').val();
-            
-            if (!room) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Room Required',
-                    text: 'Please select your room number',
-                    confirmButtonColor: '#6c5ce7'
-                });
-                $('#room-select').focus();
-                return;
-            }
-            
-            if (cart.length === 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Empty Order',
-                    text: 'Please add at least one item to your order',
-                    confirmButtonColor: '#6c5ce7'
-                });
-                return;
-            }
-            
-            // Calculate total price
-            let totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            
-            // Submit order via AJAX
-            $.ajax({
-                url: 'process_order.php',
-                method: 'POST',
-                data: {
-                    room: room,
-                    items: JSON.stringify(cart),
-                    total_price: totalPrice
-                },
-                beforeSend: function() {
-                    $('#confirm-order').html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...');
-                    $('#confirm-order').prop('disabled', true);
-                },
-                success: function(response) {
-                    try {
-                        const result = JSON.parse(response);
-                        if (result.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Order Placed!',
-                                text: 'Your order has been submitted successfully',
-                                confirmButtonColor: '#6c5ce7'
-                            }).then(() => {
-                                // Reset form and cart
-                                $('.quantity-input').val(0);
-                                $('.note-input').val('');
-                                cart = [];
-                                updateOrderSummary();
-                                location.reload(); // Refresh to show new order in latest orders
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: result.message || 'Failed to place order',
-                                confirmButtonColor: '#6c5ce7'
-                            });
-                        }
-                    } catch (e) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Invalid server response',
-                            confirmButtonColor: '#6c5ce7'
-                        });
+        if (!room) {
+            alert('Please select your room number');
+            $('#room-select').focus();
+            return;
+        }
+        
+        if (cart.length === 0) {
+            alert('Please add at least one item to your order');
+            return;
+        }
+        
+        const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const orderItems = cart.map(item => ({
+            product_id: item.productId,
+            quantity: item.quantity,
+            note: item.note || ''
+        }));
+        
+        $.ajax({
+            url: 'process_order.php',
+            method: 'POST',
+            data: {
+                user_id: <?php echo $user_id; ?>,
+                room: room,
+                items: JSON.stringify(orderItems),
+                total_price: totalPrice.toFixed(2)
+            },
+            beforeSend: function() {
+                $('#confirm-order').html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...');
+                $('#confirm-order').prop('disabled', true);
+            },
+            success: function(response) {
+                try {
+                    const result = JSON.parse(response);
+                    if (result.success) {
+                        alert('Order placed successfully!');
+                        $('.quantity-input').val(0);
+                        $('.note-input').val('');
+                        cart = [];
+                        updateOrderSummary();
+                        location.reload();
+                    } else {
+                        alert('Error: ' + result.message);
                     }
-                },
-                error: function() {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Failed to submit order. Please try again.',
-                        confirmButtonColor: '#6c5ce7'
-                    });
-                },
-                complete: function() {
-                    $('#confirm-order').html('<i class="fas fa-paper-plane me-2"></i> Confirm Order');
-                    $('#confirm-order').prop('disabled', false);
+                } catch (e) {
+                    alert('Error processing your order. Please try again.');
                 }
-            });
-        });
-        
-        // Cancel order with SweetAlert
-        $(document).on('click', '.cancel-order', function(e) {
-            e.preventDefault();
-            const orderId = $(this).data('order');
-            
-            Swal.fire({
-                title: 'Cancel Order?',
-                text: "Are you sure you want to cancel this order?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#6c5ce7',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, cancel it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: 'cancel_order.php',
-                        method: 'POST',
-                        data: { order_id: orderId },
-                        beforeSend: function() {
-                            $(`.cancel-order[data-order="${orderId}"]`).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>');
-                        },
-                        success: function(response) {
-                            const result = JSON.parse(response);
-                            if (result.success) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Cancelled!',
-                                    text: 'Your order has been cancelled',
-                                    confirmButtonColor: '#6c5ce7'
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            } else {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: result.message || 'Failed to cancel order',
-                                    confirmButtonColor: '#6c5ce7'
-                                });
-                            }
-                        }
-                    });
-                }
-            });
+            },
+            error: function() {
+                alert('Error submitting order. Please try again.');
+            },
+            complete: function() {
+                $('#confirm-order').html('<i class="fas fa-paper-plane me-2"></i> Confirm Order');
+                $('#confirm-order').prop('disabled', false);
+            }
         });
     });
+    
+    // Cancel order
+    $(document).on('click', '.cancel-order', function(e) {
+        e.preventDefault();
+        const orderId = $(this).data('order');
+        
+        if (confirm('Are you sure you want to cancel this order?')) {
+            $.ajax({
+                url: 'cancel_order.php',
+                method: 'POST',
+                data: { order_id: orderId },
+                success: function(response) {
+                    const result = JSON.parse(response);
+                    if (result.success) {
+                        alert('Order cancelled successfully');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + result.message);
+                    }
+                }
+            });
+        }
+    });
+});
 </script>
 </body>
 </html>
