@@ -1,5 +1,5 @@
 <?php
-
+session_start();
 
 require_once '../connetionDB/config.php'; 
 
@@ -8,8 +8,14 @@ if (!$conn) {
     die("Database connection failed: " . mysqli_connect_error());
 }
 
-$userId = 1; 
 
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Get user details
+$userId = $_SESSION['user_id'];
 
 $cancelMessage = '';
 

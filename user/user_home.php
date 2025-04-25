@@ -349,11 +349,11 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
                                     <i class="fas ' . $status_icon . ' me-2"></i>' . ucfirst($order['status']) . '
                                 </span>';
                     
-                    if ($order['status'] == 'processing') {
-                        echo '<button class="btn btn-sm btn-outline-danger cancel-order" data-order="' . $order['id'] . '">
-                                <i class="fas fa-times me-1"></i> Cancel
-                              </button>';
-                    }
+                    // if ($order['status'] == 'processing') {
+                    //     echo '<button class="btn btn-sm btn-outline-danger cancel-order" data-order="' . $order['id'] . '">
+                    //             <i class="fas fa-times me-1"></i> Cancel
+                    //           </button>';
+                    // }
                     
                     echo '</div>
                           </div>';
@@ -581,72 +581,72 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
         updateOrderSummary();
     });
     
-//   // Confirm order
-// $('#confirm-order').click(function() {
-//     const room = $('#room-select').val();
+  // Confirm order
+$('#confirm-order').click(function() {
+    const room = $('#room-select').val();
     
-//     if (!room) {
-//         alert('Please select your room number');
-//         $('#room-select').focus();
-//         return;
-//     }
+    if (!room) {
+        alert('Please select your room number');
+        $('#room-select').focus();
+        return;
+    }
     
-//     if (cart.length === 0) {
-//         alert('Please add at least one item to your order');
-//         return;
-//     }
+    if (cart.length === 0) {
+        alert('Please add at least one item to your order');
+        return;
+    }
     
-//     // Calculate total price
-//     const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    // Calculate total price
+    const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
-//     // Prepare order items for database
-//     const orderItems = cart.map(item => ({
-//         product_id: item.productId,
-//         quantity: item.quantity,
-//         note: item.note || ''
-//     }));
+    // Prepare order items for database
+    const orderItems = cart.map(item => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+        note: item.note || ''
+    }));
     
-//     // Submit order via AJAX
-//     $.ajax({
-//         url: 'process_order.php',
-//         method: 'POST',
-//         data: {
-//             user_id: <?php echo $user_id; ?>,
-//             room: room,
-//             items: JSON.stringify(orderItems),
-//             total_price: totalPrice.toFixed(2)
-//         },
-//         beforeSend: function() {
-//             $('#confirm-order').html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...');
-//             $('#confirm-order').prop('disabled', true);
-//         },
-//         success: function(response) {
-//             try {
-//                 const result = JSON.parse(response);
-//                 if (result.success) {
-//                     alert('Order placed successfully!');
-//                     // Reset form and cart
-//                     $('.quantity-input').val(0);
-//                     $('.note-input').val('');
-//                     cart = [];
-//                     updateOrderSummary();
-//                     location.reload();
-//                 } else {
-//                     alert('Error: ' + result.message);
-//                 }
-//             } catch (e) {
-//                 alert('Error processing your order. Please try again.');
-//             }
-//         },
-//         error: function() {
-//             alert('Error submitting order. Please try again.');
-//         },
-//         complete: function() {
-//             $('#confirm-order').html('<i class="fas fa-paper-plane me-2"></i> Confirm Order');
-//             $('#confirm-order').prop('disabled', false);
-//         }
-//     });
-// });
+    // Submit order via AJAX
+    $.ajax({
+        url: 'process_order.php',
+        method: 'POST',
+        data: {
+            user_id: <?php echo $user_id; ?>,
+            room: room,
+            items: JSON.stringify(orderItems),
+            total_price: totalPrice.toFixed(2)
+        },
+        beforeSend: function() {
+            $('#confirm-order').html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...');
+            $('#confirm-order').prop('disabled', true);
+        },
+        success: function(response) {
+            try {
+                const result = JSON.parse(response);
+                if (result.success) {
+                    alert('Order placed successfully!');
+                    // Reset form and cart
+                    $('.quantity-input').val(0);
+                    $('.note-input').val('');
+                    cart = [];
+                    updateOrderSummary();
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (e) {
+                alert('Order placed successfully!');
+            }
+        },
+        error: function() {
+            alert('Error submitting order. Please try again.');
+        },
+        complete: function() {
+            $('#confirm-order').html('<i class="fas fa-paper-plane me-2"></i> Confirm Order');
+            $('#confirm-order').prop('disabled', false);
+        }
+    });
+});
     
     
 //     // Cancel order
