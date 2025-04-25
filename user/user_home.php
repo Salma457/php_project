@@ -14,11 +14,24 @@ $user_query = "SELECT * FROM users WHERE id = $user_id";
 $user_result = mysqli_query($conn, $user_query);
 $user = mysqli_fetch_assoc($user_result);
 
-// Get all available products
+// Pagination settings
+$items_per_page = 6; // Number of products per page
+$current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($current_page < 1) $current_page = 1;
+$offset = ($current_page - 1) * $items_per_page;
+
+// Get total number of products
+$total_products_query = "SELECT COUNT(*) as total FROM products WHERE available = TRUE";
+$total_products_result = mysqli_query($conn, $total_products_query);
+$total_products = mysqli_fetch_assoc($total_products_result)['total'];
+$total_pages = ceil($total_products / $items_per_page);
+
+// Get all available products with pagination
 $products_query = "SELECT p.*, c.name as category_name 
                   FROM products p 
                   LEFT JOIN categories c ON p.category_id = c.id 
-                  WHERE p.available = TRUE";
+                  WHERE p.available = TRUE
+                  LIMIT $offset, $items_per_page";
 $products_result = mysqli_query($conn, $products_query);
 $products = mysqli_fetch_all($products_result, MYSQLI_ASSOC);
 
@@ -135,6 +148,24 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+        .pagination {
+    margin-top: 20px;
+}
+
+.page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.page-link {
+    color: var(--primary-color);
+}
+
+.page-link:hover {
+    color: var(--primary-color);
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
     </style>
 </head>
 <body>
@@ -219,6 +250,7 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
                 </div>
             </div>
 
+            
          <!-- Order Summary Sidebar -->
 <div class="col-lg-4">
     <div class="order-summary p-4 mb-4">
@@ -331,6 +363,52 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
         </div>
     </div>
 </div>
+<!-- Pagination -->
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <?php if ($current_page > 1): ?>
+            <li class="page-item">
+                <a class="page-link" href="?page=<?= $current_page - 1 ?>" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        <?php endif; ?>
+        
+        <?php 
+        // Show page numbers
+        $start_page = max(1, $current_page - 2);
+        $end_page = min($total_pages, $current_page + 2);
+        
+        if ($start_page > 1) {
+            echo '<li class="page-item"><a class="page-link" href="?page=1">1</a></li>';
+            if ($start_page > 2) {
+                echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+        }
+        
+        for ($i = $start_page; $i <= $end_page; $i++): ?>
+            <li class="page-item <?= $i == $current_page ? 'active' : '' ?>">
+                <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
+            </li>
+        <?php endfor; 
+        
+        if ($end_page < $total_pages) {
+            if ($end_page < $total_pages - 1) {
+                echo '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+            echo '<li class="page-item"><a class="page-link" href="?page='.$total_pages.'">'.$total_pages.'</a></li>';
+        }
+        ?>
+        
+        <?php if ($current_page < $total_pages): ?>
+            <li class="page-item">
+                <a class="page-link" href="?page=<?= $current_page + 1 ?>" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        <?php endif; ?>
+    </ul>
+</nav>
     <!-- jQuery and Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
