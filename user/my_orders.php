@@ -95,7 +95,7 @@ if ($stmt) {
     $result = mysqli_stmt_get_result($stmt);
 
     while ($row = mysqli_fetch_assoc($result)) {
-        $orderItemsSql = "SELECT oi.quantity, oi.note, p.name AS product_name, p.price AS product_price, p.image AS product_image
+        $orderItemsSql = "SELECT oi.quantity, oi.note, p.name AS product_name, p.price AS product_price, p.image AS image_p
                           FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ?";
         $itemStmt = mysqli_prepare($conn, $orderItemsSql);
         $items = [];
@@ -430,9 +430,9 @@ function buildPaginationUrl($page, $dateFrom, $dateTo) {
                                     <ul class="list-unstyled">
                                         <?php foreach ($order['items'] as $item): ?>
                                             <li class="order-item">
-                                                <img src="<?php echo htmlspecialchars($item['product_image'] ?? 'placeholder.png'); ?>"
+                                                <img src="<?php echo htmlspecialchars($item['image_p'] ?? 'placeholder.png'); ?>"
                                                      alt="<?php echo htmlspecialchars($item['product_name']); ?>"
-                                                     onerror="this.onerror=null; this.src='placeholder.png';" > <div class="item-details">
+                                                     onerror="this.onerror=null; this.src='image_p';" > <div class="item-details">
                                                     <strong><?php echo htmlspecialchars($item['product_name']); ?></strong>
                                                     <span><?php echo htmlspecialchars($item['quantity']); ?> x <?php echo htmlspecialchars(number_format($item['product_price'], 2)); ?> EGP</span>
                                                     <?php if (!empty($item['note'])): ?>
