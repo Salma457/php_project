@@ -3,7 +3,7 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$database = "iti";
+$database = "cafeteriaDB";
 
 $conn = mysqli_connect($servername, $username, $password, $database);
 
