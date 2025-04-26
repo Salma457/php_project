@@ -349,11 +349,11 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
                                     <i class="fas ' . $status_icon . ' me-2"></i>' . ucfirst($order['status']) . '
                                 </span>';
                     
-                    if ($order['status'] == 'processing') {
-                        echo '<button class="btn btn-sm btn-outline-danger cancel-order" data-order="' . $order['id'] . '">
-                                <i class="fas fa-times me-1"></i> Cancel
-                              </button>';
-                    }
+                    // if ($order['status'] == 'processing') {
+                    //     echo '<button class="btn btn-sm btn-outline-danger cancel-order" data-order="' . $order['id'] . '">
+                    //             <i class="fas fa-times me-1"></i> Cancel
+                    //           </button>';
+                    // }
                     
                     echo '</div>
                           </div>';
