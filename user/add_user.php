@@ -1,10 +1,10 @@
 <?php
 include '../connetionDB/config.php'; 
 
-$name        = 'Salma Hussein';
-$email       = 's@gmail.com';
+$name        = 'soli';
+$email       = 's1234@gmail.com';
 $password    = password_hash('s12345', PASSWORD_DEFAULT);
-$room_number = '101';
+$room_number = '2002';
 $image       = 'salma.jpg';
 $role        = 'user';
 

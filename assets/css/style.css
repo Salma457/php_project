@@ -1,0 +1,63 @@
+/* General Styles */
+body {
+    padding-top: 56px;
+    background-color: #f8f9fa;
+}
+
+/* Navbar Styles */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+/* Manual Order Page Styles */
+.product-item {
+    transition: all 0.3s ease;
+}
+
+.product-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,.1);
+}
+
+.product-img {
+    height: 150px;
+    object-fit: cover;
+    border-bottom: 1px solid #dee2e6;
+}
+
+#orderItems {
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.quantity {
+    width: 50px;
+    text-align: center;
+}
+
+.input-group {
+    width: 150px;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+    transition: all 0.3s ease;
+}
+
+.card-header {
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .sticky-top {
+        position: static !important;
+    }
+}
