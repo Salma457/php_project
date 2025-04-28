@@ -39,6 +39,10 @@ $products = mysqli_fetch_all($products_result, MYSQLI_ASSOC);
 $categories_query = "SELECT * FROM categories";
 $categories_result = mysqli_query($conn, $categories_query);
 $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
+
+// Initialize alert variables
+$alertMessage = isset($alertMessage) ? $alertMessage : '';
+$alertType = isset($alertType) ? $alertType : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -193,6 +197,14 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
         </div>
     </nav>
 
+    <div id="alert-container" class="position-fixed top-0 start-50 translate-middle-x w-100 p-3" style="z-index: 9999;">
+    <?php if (!empty($alertMessage)): ?>
+        <div id="dynamic-alert" class="alert alert-<?php echo $alertType; ?> alert-dismissible fade show" role="alert">
+            <?php echo htmlspecialchars($alertMessage); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?>
+</div>
     <div class="container mb-5">
         <div class="row">
             <!-- Main Content Area -->
@@ -220,6 +232,7 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
      data-product-id="<?php echo $product['id']; ?>"
      data-product-price="<?php echo number_format($product['price'], 2, '.', ''); ?>">
     <div class="card h-100">
+         <!-- Display product image, name, and price be carefully -->
         <img src="<?php echo 'http://localhost/php_project/' . htmlspecialchars($product['image']); ?>" class="card-img-top product-img">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-start">
@@ -324,13 +337,13 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
             } else {
                 while ($order = mysqli_fetch_assoc($orders_result)) {
                     $status_class = 'text-warning';
-                    $status_icon = 'fa-spinner';
+                    $status_icon = 'fas fa-spinner';
                     if ($order['status'] == 'out for delivery') {
                         $status_class = 'text-info';
-                        $status_icon = 'fa-truck';
+                        $status_icon = 'fas fa-truck';
                     } elseif ($order['status'] == 'done') {
                         $status_class = 'text-success';
-                        $status_icon = 'fa-check-circle';
+                        $status_icon = 'fas fa-check-circle';
                     }
                     
                     echo '<div class="order-card mb-3 p-3 border rounded">
@@ -416,262 +429,277 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
     <!-- Custom JavaScript -->
     <script>
     $(document).ready(function() {
-    let cart = [];
-    
-    // Category filter
-    $('.filter-btn').click(function() {
-        const category = $(this).data('category');
-        $('.filter-btn').removeClass('active');
-        $(this).addClass('active');
+        // Auto-dismiss alert after 1 second
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 1000);
+
+        let cart = [];
         
-        if (category === 'all') {
-            $('.product-item').show();
-        } else {
-            $('.product-item').hide();
-            $(`.product-item[data-category="${category}"]`).show();
-        }
-    });
-    
-    // Plus button
-    $('.plus-btn').click(function() {
-        const productId = $(this).data('product');
-        const productCard = $(this).closest('.product-item');
-        const productPrice = parseFloat(productCard.data('product-price'));
-        const input = $(`#quantity-${productId}`);
-        input.val(parseInt(input.val()) + 1);
-        updateCart(productId, productPrice, parseInt(input.val()), $(`#note-${productId}`).val());
-        updateOrderSummary();
-    });
-    
-    // Minus button
-    $('.minus-btn').click(function() {
-        const productId = $(this).data('product');
-        const productCard = $(this).closest('.product-item');
-        const productPrice = parseFloat(productCard.data('product-price'));
-        const input = $(`#quantity-${productId}`);
-        const newQty = Math.max(parseInt(input.val()) - 1, 0);
-        input.val(newQty);
-        updateCart(productId, productPrice, newQty, $(`#note-${productId}`).val());
-        updateOrderSummary();
-    });
-    
-    // Quantity input change
-    $('.quantity-input').change(function() {
-        const productId = $(this).attr('id').replace('quantity-', '');
-        const productCard = $(this).closest('.product-item');
-        const productPrice = parseFloat(productCard.data('product-price'));
-        const newQty = Math.max(parseInt($(this).val()) || 0, 0);
-        $(this).val(newQty);
-        updateCart(productId, productPrice, newQty, $(`#note-${productId}`).val());
-        updateOrderSummary();
-    });
-    
-    // Note input change
-    $('.note-input').on('input', function() {
-        const productId = $(this).attr('id').replace('note-', '');
-        const quantity = parseInt($(`#quantity-${productId}`).val()) || 0;
-        if (quantity > 0) {
-            const productCard = $(this).closest('.product-item');
-            const productPrice = parseFloat(productCard.data('product-price'));
-            updateCart(productId, productPrice, quantity, $(this).val());
-            updateOrderSummary();
-        }
-    });
-    
-    // Update cart
-    function updateCart(productId, price, quantity, note) {
-        const productCard = $(`.product-item[data-product-id="${productId}"]`);
-        const productName = productCard.find('.card-title').text();
-        const productImage = productCard.find('.product-img').attr('src');
-        
-        const existingItemIndex = cart.findIndex(item => item.productId == productId);
-        
-        if (quantity > 0) {
-            const cartItem = {
-                productId: productId,
-                name: productName,
-                price: price,
-                quantity: quantity,
-                note: note,
-                image: productImage
-            };
+        // Category filter
+        $('.filter-btn').click(function() {
+            const category = $(this).data('category');
+            $('.filter-btn').removeClass('active');
+            $(this).addClass('active');
             
-            if (existingItemIndex >= 0) {
-                cart[existingItemIndex] = cartItem;
+            if (category === 'all') {
+                $('.product-item').show();
             } else {
-                cart.push(cartItem);
+                $('.product-item').hide();
+                $(`.product-item[data-category="${category}"]`).show();
             }
-        } else if (existingItemIndex >= 0) {
-            cart.splice(existingItemIndex, 1);
-        }
-    }
-    
-    // Update order summary
-    function updateOrderSummary() {
-        let total = 0;
-        let itemsHtml = '';
-        
-        cart.forEach(item => {
-            const itemTotal = item.price * item.quantity;
-            total += itemTotal;
-            
-            itemsHtml += `
-                <div class="cart-item mb-3 pb-2 border-bottom">
-                    <div class="d-flex align-items-start">
-                        <img src="${item.image}" class="rounded me-3" width="60" height="60" style="object-fit: cover">
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between">
-                                <h6 class="mb-1">${item.name}</h6>
-                                <span class="text-primary fw-bold">${itemTotal.toFixed(2)} EGP</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">${item.price.toFixed(2)} EGP each</small>
-                                <div class="quantity-controls">
-                                    <button class="btn btn-sm btn-outline-secondary minus-summary" data-product="${item.productId}">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                    <span class="mx-2">${item.quantity}</span>
-                                    <button class="btn btn-sm btn-outline-secondary plus-summary" data-product="${item.productId}">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            ${item.note ? `<div class="mt-1 small text-muted"><i class="fas fa-comment-alt me-1"></i>${item.note}</div>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
         });
         
-        if (cart.length === 0) {
-            itemsHtml = `
-                <div class="text-center py-3 text-muted">
-                    <i class="fas fa-shopping-basket fa-2x mb-2"></i>
-                    <p>Your basket is empty</p>
-                </div>
-            `;
-        }
+        // Plus button
+        $('.plus-btn').click(function() {
+            const productId = $(this).data('product');
+            const productCard = $(this).closest('.product-item');
+            const productPrice = parseFloat(productCard.data('product-price'));
+            const input = $(`#quantity-${productId}`);
+            input.val(parseInt(input.val()) + 1);
+            updateCart(productId, productPrice, parseInt(input.val()), $(`#note-${productId}`).val());
+            updateOrderSummary();
+        });
         
-        $('#selected-items').html(itemsHtml);
-        $('#total-price').text(total.toFixed(2) + ' EGP');
-        $('#item-count').text(cart.reduce((sum, item) => sum + item.quantity, 0) + ' ' + (cart.reduce((sum, item) => sum + item.quantity, 0) === 1 ? 'item' : 'items'));
+        // Minus button
+        $('.minus-btn').click(function() {
+            const productId = $(this).data('product');
+            const productCard = $(this).closest('.product-item');
+            const productPrice = parseFloat(productCard.data('product-price'));
+            const input = $(`#quantity-${productId}`);
+            const newQty = Math.max(parseInt(input.val()) - 1, 0);
+            input.val(newQty);
+            updateCart(productId, productPrice, newQty, $(`#note-${productId}`).val());
+            updateOrderSummary();
+        });
         
-        $('#confirm-order').prop('disabled', cart.length === 0);
-    }
-    
-    // Handle quantity changes from summary
-    $(document).on('click', '.plus-summary', function() {
-        const productId = $(this).data('product');
-        const input = $(`#quantity-${productId}`);
-        input.val(parseInt(input.val()) + 1);
-        const productCard = $(`.product-item[data-product-id="${productId}"]`);
-        const productPrice = parseFloat(productCard.data('product-price'));
-        updateCart(productId, productPrice, parseInt(input.val()), $(`#note-${productId}`).val());
-        updateOrderSummary();
-    });
-    
-    $(document).on('click', '.minus-summary', function() {
-        const productId = $(this).data('product');
-        const input = $(`#quantity-${productId}`);
-        const newQty = Math.max(parseInt(input.val()) - 1, 0);
-        input.val(newQty);
-        const productCard = $(`.product-item[data-product-id="${productId}"]`);
-        const productPrice = parseFloat(productCard.data('product-price'));
-        updateCart(productId, productPrice, newQty, $(`#note-${productId}`).val());
-        updateOrderSummary();
-    });
-    
-  // Confirm order
-$('#confirm-order').click(function() {
-    const room = $('#room-select').val();
-    
-    if (!room) {
-        alert('Please select your room number');
-        $('#room-select').focus();
-        return;
-    }
-    
-    if (cart.length === 0) {
-        alert('Please add at least one item to your order');
-        return;
-    }
-    
-    // Calculate total price
-    const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    // Prepare order items for database
-    const orderItems = cart.map(item => ({
-        product_id: item.productId,
-        quantity: item.quantity,
-        note: item.note || ''
-    }));
-    
-    // Submit order via AJAX
-    $.ajax({
-        url: 'process_order.php',
-        method: 'POST',
-        data: {
-            user_id: <?php echo $user_id; ?>,
-            room: room,
-            items: JSON.stringify(orderItems),
-            total_price: totalPrice.toFixed(2)
-        },
-        beforeSend: function() {
-            $('#confirm-order').html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...');
-            $('#confirm-order').prop('disabled', true);
-        },
-        success: function(response) {
-            try {
-                const result = JSON.parse(response);
-                if (result.success) {
-                    alert('Order placed successfully!');
-                    // Reset form and cart
-                    $('.quantity-input').val(0);
-                    $('.note-input').val('');
-                    cart = [];
-                    updateOrderSummary();
-                    location.reload();
-                } else {
-                    alert('Error: ' + result.message);
-                }
-            } catch (e) {
-                alert('Order placed successfully!');
+        // Quantity input change
+        $('.quantity-input').change(function() {
+            const productId = $(this).attr('id').replace('quantity-', '');
+            const productCard = $(this).closest('.product-item');
+            const productPrice = parseFloat(productCard.data('product-price'));
+            const newQty = Math.max(parseInt($(this).val()) || 0, 0);
+            $(this).val(newQty);
+            updateCart(productId, productPrice, newQty, $(`#note-${productId}`).val());
+            updateOrderSummary();
+        });
+        
+        // Note input change
+        $('.note-input').on('input', function() {
+            const productId = $(this).attr('id').replace('note-', '');
+            const quantity = parseInt($(`#quantity-${productId}`).val()) || 0;
+            if (quantity > 0) {
+                const productCard = $(this).closest('.product-item');
+                const productPrice = parseFloat(productCard.data('product-price'));
+                updateCart(productId, productPrice, quantity, $(this).val());
+                updateOrderSummary();
             }
-        },
-        error: function() {
-            alert('Error submitting order. Please try again.');
-        },
-        complete: function() {
-            $('#confirm-order').html('<i class="fas fa-paper-plane me-2"></i> Confirm Order');
-            $('#confirm-order').prop('disabled', false);
-        }
-    });
-});
-    
-    
-//     // Cancel order
-//     $(document).on('click', '.cancel-order', function(e) {
-//         e.preventDefault();
-//         const orderId = $(this).data('order');
+        });
         
-//         if (confirm('Are you sure you want to cancel this order?')) {
-//             $.ajax({
-//                 url: 'cancel_order.php',
-//                 method: 'POST',
-//                 data: { order_id: orderId },
-//                 success: function(response) {
-//                     const result = JSON.parse(response);
-//                     if (result.success) {
-//                         alert('Order cancelled successfully');
-//                         location.reload();
-//                     } else {
-//                         alert('Error: ' + result.message);
-//                     }
-//                 }
-//             });
-//         }
-//     });
-});
-</script>
+        // Update cart
+        function updateCart(productId, price, quantity, note) {
+            const productCard = $(`.product-item[data-product-id="${productId}"]`);
+            const productName = productCard.find('.card-title').text();
+            const productImage = productCard.find('.product-img').attr('src');
+            
+            const existingItemIndex = cart.findIndex(item => item.productId == productId);
+            
+            if (quantity > 0) {
+                const cartItem = {
+                    productId: productId,
+                    name: productName,
+                    price: price,
+                    quantity: quantity,
+                    note: note,
+                    image: productImage
+                };
+                
+                if (existingItemIndex >= 0) {
+                    cart[existingItemIndex] = cartItem;
+                } else {
+                    cart.push(cartItem);
+                }
+            } else if (existingItemIndex >= 0) {
+                cart.splice(existingItemIndex, 1);
+            }
+        }
+        
+        // Update order summary
+        function updateOrderSummary() {
+            let total = 0;
+            let itemsHtml = '';
+            
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                
+                itemsHtml += `
+                    <div class="cart-item mb-3 pb-2 border-bottom">
+                        <div class="d-flex align-items-start">
+                            <img src="${item.image}" class="rounded me-3" width="60" height="60" style="object-fit: cover">
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1">${item.name}</h6>
+                                    <span class="text-primary fw-bold">${itemTotal.toFixed(2)} EGP</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">${item.price.toFixed(2)} EGP each</small>
+                                    <div class="quantity-controls">
+                                        <button class="btn btn-sm btn-outline-secondary minus-summary" data-product="${item.productId}">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <span class="mx-2">${item.quantity}</span>
+                                        <button class="btn btn-sm btn-outline-secondary plus-summary" data-product="${item.productId}">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                ${item.note ? `<div class="mt-1 small text-muted"><i class="fas fa-comment-alt me-1"></i>${item.note}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (cart.length === 0) {
+                itemsHtml = `
+                    <div class="text-center py-3 text-muted">
+                        <i class="fas fa-shopping-basket fa-2x mb-2"></i>
+                        <p>Your basket is empty</p>
+                    </div>
+                `;
+            }
+            
+            $('#selected-items').html(itemsHtml);
+            $('#total-price').text(total.toFixed(2) + ' EGP');
+            $('#item-count').text(cart.reduce((sum, item) => sum + item.quantity, 0) + ' ' + (cart.reduce((sum, item) => sum + item.quantity, 0) === 1 ? 'item' : 'items'));
+            
+            $('#confirm-order').prop('disabled', cart.length === 0);
+        }
+        
+        // Handle quantity changes from summary
+        $(document).on('click', '.plus-summary', function() {
+            const productId = $(this).data('product');
+            const input = $(`#quantity-${productId}`);
+            input.val(parseInt(input.val()) + 1);
+            const productCard = $(`.product-item[data-product-id="${productId}"]`);
+            const productPrice = parseFloat(productCard.data('product-price'));
+            updateCart(productId, productPrice, parseInt(input.val()), $(`#note-${productId}`).val());
+            updateOrderSummary();
+        });
+        
+        $(document).on('click', '.minus-summary', function() {
+            const productId = $(this).data('product');
+            const input = $(`#quantity-${productId}`);
+            const newQty = Math.max(parseInt(input.val()) - 1, 0);
+            input.val(newQty);
+            const productCard = $(`.product-item[data-product-id="${productId}"]`);
+            const productPrice = parseFloat(productCard.data('product-price'));
+            updateCart(productId, productPrice, newQty, $(`#note-${productId}`).val());
+            updateOrderSummary();
+        });
+        
+        // Confirm order
+        $('#confirm-order').click(function() {
+            const room = $('#room-select').val();
+            
+            if (!room) {
+                // Show Bootstrap alert
+                const alertContainer = $('#alert-container');
+                alertContainer.html(`
+                    <div id="dynamic-alert" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        Please select your room number!
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `);
+                
+                // Auto-dismiss after 1 second
+                setTimeout(function() {
+                    $('#dynamic-alert').alert('close');
+                }, 1000);
+                
+                $('#room-select').focus();
+                return;
+            }
+            
+            if (cart.length === 0) {
+                return;
+            }
+            
+            // Calculate total price
+            const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            // Prepare order items for database
+            const orderItems = cart.map(item => ({
+                product_id: item.productId,
+                quantity: item.quantity,
+                note: item.note || ''
+            }));
+            
+            // Submit order via AJAX
+            $.ajax({
+                url: 'process_order.php',
+                method: 'POST',
+                data: {
+                    user_id: <?php echo $user_id; ?>,
+                    room: room,
+                    items: JSON.stringify(orderItems),
+                    total_price: totalPrice.toFixed(2)
+                },
+                beforeSend: function() {
+                    $('#confirm-order').html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...');
+                    $('#confirm-order').prop('disabled', true);
+                },
+                success: function(response) {
+                    try {
+                        const result = JSON.parse(response);
+                        if (result.success) {
+                            const alertContainer = $('#alert-container');
+                alertContainer.html(`
+                    <div id="dynamic-alert" class="alert alert-danger alert-dismissible fade show" role="alert">
+                       
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `);
+                
+                // Auto-dismiss after 1 second
+                setTimeout(function() {
+                    $('#dynamic-alert').alert('close');
+                }, 1000);
+                            // Reset form and cart
+                            $('.quantity-input').val(0);
+                            $('.note-input').val('');
+                            cart = [];
+                            updateOrderSummary();
+                            location.reload();
+                        } else {
+                            alert('Error: ' + result.message);
+                        }
+                    } catch (e) {
+                        const alertContainer = $('#alert-container');
+                alertContainer.html(`
+                    <div id="dynamic-alert" class="alert alert-success alert-dismissible fade show" role="alert">
+                        confirm order successfully
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `);
+                
+                // Auto-dismiss after 1 second
+                setTimeout(function() {
+                    $('#dynamic-alert').alert('close');
+                }, 1000);
+                    }
+                },
+                error: function() {
+                    alert('Error submitting order. Please try again.');
+                },
+                complete: function() {
+                    $('#confirm-order').html('<i class="fas fa-paper-plane me-2"></i> Confirm Order');
+                    $('#confirm-order').prop('disabled', false);
+                }
+            });
+        });
+    });
+    </script>
 </body>
 </html>

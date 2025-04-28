@@ -1,20 +1,11 @@
 <?php
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "cafeteriaDB"; // اسم قاعدة البيانات
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+session_start();
+require_once '../connetionDB/config.php';
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// تعديل الاستعلام لجلب كل الأعمدة المطلوبة
+
 $sql = "SELECT id, name, email, room_number, image FROM users";
 $result = $conn->query($sql);
 
@@ -42,11 +33,25 @@ if (!$result) {
         .card-header {
             background: linear-gradient(45deg, #6c5ce7, #341f97);
         }
+        .btnadd {
+            background-color:rgb(16, 112, 124) !important;
+            color: white;
+            border-radius: 15px;
+            padding: 10px 20px;
+            margin-bottom: 20px !important;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
+<?php include '../admin/includes/navbar.php'; ?>
 
 <div class="container py-5">
+<a href="../admin/adduser.php" class="btn btnadd" >
+            <i class="fas fa-plus-circle me-2" styles="margin-bottom: 50px;"></i>create product
+           
+   
+</a>
     <div class="card shadow">
         <div class="card-header text-white text-center">
             <h3 class="mb-0">User Management</h3>
@@ -71,7 +76,7 @@ if (!$result) {
 
                                     <div class="d-flex justify-content-center gap-2">
                                         <a href="update_user.php?id=<?php echo $row['id']; ?>" class="btn btn-outline-primary btn-sm">Edit</a>
-                                        <a href="delete_user.php?id=<?php echo $row['id']; ?>" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to delete this user?');">Delete</a>
+                                        <a href="delete_user.php?id=<?php echo $row['id']; ?>" class="btn btn-outline-danger btn-sm" >Delete</a>
                                     </div>
                                 </div>
                             </div>

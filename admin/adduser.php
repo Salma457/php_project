@@ -1,3 +1,135 @@
+
+
+<?php
+
+
+session_start();
+require_once '../connetionDB/config.php';
+
+// Initialize variables and error messages
+$errors = [];
+$nameErr = $emailErr = $passwordErr = $confirmPasswordErr = '';
+$successMessage = '';
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Sanitize inputs
+    $name = trim($_POST['name']);
+    $email = trim($_POST['email']);
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
+
+    // Validate Name
+    if (empty($name)) {
+        $nameErr = "Name is required.";
+    } elseif (!preg_match("/^[a-zA-Z ]+$/", $name)) {
+        $nameErr = "Name must contain only letters and spaces.";
+    }
+
+    // Validate Email
+    if (empty($email)) {
+        $emailErr = "Email is required.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $emailErr = "Invalid email format.";
+    } else {
+        // Check if email already exists
+        $check_email = $conn->prepare("SELECT id FROM users WHERE email = ?");
+        $check_email->bind_param("s", $email);
+        $check_email->execute();
+        $check_email->store_result();
+        if ($check_email->num_rows > 0) {
+            $emailErr = "This email is already registered.";
+        }
+        $check_email->close();
+    }
+
+    // Validate Password
+    if (empty($password)) {
+        $passwordErr = "Password is required.";
+    } elseif (strlen($password) < 8) {
+        $passwordErr = "Password must be at least 8 characters long.";
+    } elseif (!preg_match("/[a-z]/i", $password)) {
+        $passwordErr = "Password must contain at least one letter.";
+    } elseif (!preg_match("/[0-9]/", $password)) {
+        $passwordErr = "Password must contain at least one number.";
+    }
+
+    // Validate Confirm Password
+    if (empty($confirm_password)) {
+        $confirmPasswordErr = "Confirm password is required.";
+    } elseif ($password !== $confirm_password) {
+        $confirmPasswordErr = "Passwords do not match.";
+    }
+
+    // If no errors, proceed with adding the user
+    if (empty($nameErr) && empty($emailErr) && empty($passwordErr) && empty($confirmPasswordErr)) {
+        // Hash the password
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+        // Handle image upload
+        $target_dir = "../user/useruploads/";
+        if (!is_dir($target_dir)) {
+            mkdir($target_dir, 0777, true);
+        }
+
+        $target_file = $target_dir . basename($_FILES["profile_picture"]["name"]);
+        $uploadOk = 1;
+        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+
+        // Check if file is an actual image
+        $check = getimagesize($_FILES["profile_picture"]["tmp_name"]);
+        if ($check === false) {
+            $uploadOk = 0;
+        }
+
+        // Check file size (500KB max)
+        if ($_FILES["profile_picture"]["size"] > 500000) {
+            $uploadOk = 0;
+        }
+
+        // Allow only specific file formats
+        if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg" && $imageFileType != "gif") {
+            $uploadOk = 0;
+        }
+
+        if ($uploadOk) {
+            if (move_uploaded_file($_FILES["profile_picture"]["tmp_name"], $target_file)) {
+                // Insert user data into the database
+                $sql = "INSERT INTO users (name, email, password, image) VALUES (?, ?, ?, ?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ssss", $name, $email, $hashed_password, $target_file);
+
+                if ($stmt->execute()) {
+                    $successMessage = "User added successfully!";
+                } else {
+                    $errors[] = "Error adding user.";
+                }
+
+               
+            } else {
+                $errors[] = "Error uploading profile picture.";
+            }
+        } else {
+            $errors[] = "Invalid or unsupported profile picture.";
+        }
+    }
+
+}
+?>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -5,7 +137,21 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
+
+.error-message {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        /* Custom styles for success alert */
+        .alert-success {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 9999;
+        }
         :root {
             --primary: #4361ee;
             --secondary: #3f37c9;
@@ -200,31 +346,37 @@
     </style>
 </head>
 <body>
+
     <div class="container">
         <h2><i class="fas fa-user-plus" style="margin-right: 10px;"></i>Add User</h2>
-        
-        <?php if (isset($_SESSION['success_message'])): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle"></i> <?php echo $_SESSION['success_message']; ?>
+
+        <?php if (!empty($successMessage)): ?>
+            <div id="success-alert" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($successMessage); ?>
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <?php unset($_SESSION['success_message']); ?>
         <?php endif; ?>
+        
+      
         
         <form method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label><i class="fas fa-user" style="margin-right: 8px;"></i>Name:</label>
-                <input type="text" class="form-control" name="name" required>
+                <input type="text" class="form-control" name="name" required  value="<?php echo htmlspecialchars($name ?? ''); ?>" >
+                <div class="error-message"><?php echo $nameErr; ?></div>
             </div>
             <div class="form-group">
                 <label><i class="fas fa-envelope" style="margin-right: 8px;"></i>Email:</label>
-                <input type="email" class="form-control" name="email" required>
+                <input type="email" class="form-control" name="email" required value="<?php echo htmlspecialchars($email ?? ''); ?>">
+                <div class="error-message"><?php echo $emailErr; ?></div>
+
             </div>
             <div class="form-group">
                 <label><i class="fas fa-lock" style="margin-right: 8px;"></i>Password:</label>
                 <input type="password" class="form-control" name="password" required id="password">
+                <div class="error-message"><?php echo $passwordErr; ?></div>
                 <div class="password-strength">
                     <div class="password-strength-bar" id="password-strength-bar"></div>
                 </div>
@@ -232,6 +384,7 @@
             <div class="form-group">
                 <label><i class="fas fa-lock" style="margin-right: 8px;"></i>Confirm Password:</label>
                 <input type="password" class="form-control" name="confirm_password" required>
+                <div class="error-message"><?php echo $confirmPasswordErr; ?></div>
             </div>
             <div class="form-group">
                 <label><i class="fas fa-image" style="margin-right: 8px;"></i>Profile Picture:</label>
@@ -420,6 +573,25 @@ if (isset($_POST['submit'])) {
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script>
+
+
+
+// Automatically hide success alert after 1 second
+$(document).ready(function () {
+            if ($('#success-alert').length) {
+                setTimeout(function () {
+                    $('#success-alert').fadeOut('slow', function () {
+                        $(this).remove();
+                    });
+                }, 1000);
+            }});
+
+
+
+
+
+
+
     $(document).ready(function() {
         // File input label update
         $('#profile_picture').change(function() {

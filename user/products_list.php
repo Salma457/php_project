@@ -41,11 +41,26 @@ $result = mysqli_query($conn, $query);
         .badge-unavailable {
             background-color: #d63031;
         }
+        .btnadd {
+            background-color:rgb(16, 112, 124) !important;
+            color: white;
+            border-radius: 15px;
+            padding: 10px 20px;
+            margin-bottom: 20px !important;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
+<?php include '../admin/includes/navbar.php'; ?>
     <div class="container py-5">
-        <h1 class="text-center mb-5">Products List</h1>
+        <h1 class="text-center mb-4">Products List</h1>
+
+        <a href="    ../admin/add_product.php" class="btn btnadd" >
+            <i class="fas fa-plus-circle me-2" styles="margin-bottom: 50px;"></i>create product
+           
+   
+</a>
         <div class="row g-4">
             <?php while ($product = mysqli_fetch_assoc($result)): ?>
                 <div class="col-md-6 col-lg-4">

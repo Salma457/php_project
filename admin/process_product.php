@@ -50,11 +50,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Check file size (max 2MB)
-        if ($_FILES['image']['size'] > 2000000) {
-            $_SESSION['product_error'] = "Image size must be less than 2MB";
-            header("Location: add_product.php");
-            exit();
-        }
+        // if ($_FILES['image']['size'] > 2000000) {
+        //     $_SESSION['product_error'] = "Image size must be less than 2MB";
+        //     header("Location: add_product.php");
+        //     exit();
+        // }
         
         // Allow certain file formats
         $imageFileType = strtolower(pathinfo($target_path, PATHINFO_EXTENSION));

@@ -16,16 +16,19 @@ $is_admin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
                     <a class="nav-link" href="dashboard.php">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" href="manual_order.php">Manual Order</a>
+                    <a class="nav-link active" href="../admin/manual_order.php">Manual Order</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="products.php">Products</a>
+                <a class="nav-link" href="../user/products_list.php">Products</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="users.php">Users</a>
+                    <a class="nav-link" href="../user/list_all_users.php">Users</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="orders.php">Orders</a>
+                    <a class="nav-link" href="../admin/orders.php">Orders</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="../admin/checks.php">Checks</a>
                 </li>
                 <?php endif; ?>
             </ul>
