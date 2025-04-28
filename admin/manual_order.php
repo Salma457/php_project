@@ -134,7 +134,7 @@ $categories_result = mysqli_query($conn, $categories_query);
 <?php include 'includes/navbar.php'; ?>
 
 <div class="container my-5">
-    <h2 class="text-center mb-5 fw-bold" style="color: #6c5ce7;">🚀 Create New Order</h2>
+    <h2 class="text-center mb-5 fw-bold" style="color: #6c5ce7;">Create New Order</h2>
 
     <div class="row g-4">
         <div class="col-lg-8">
@@ -174,7 +174,7 @@ $categories_result = mysqli_query($conn, $categories_query);
                             <?php while ($product = mysqli_fetch_assoc($products_result)): ?>
                                 <div class="col-md-4">
                                     <div class="card h-100 product-item" data-id="<?= $product['id'] ?>" data-price="<?= $product['price'] ?>">
-                                    <img src="<?php echo 'http://localhost/php_project/' . htmlspecialchars($product['image']); ?>" class="card-img-top product-img">
+                                    <img src="<?php echo 'http://localhost/php_project/uploads/' . htmlspecialchars($product['image']); ?>" class="card-img-top product-img">
 
                                         <div class="card-body text-center">
                                             <h6 class="card-title"><?= htmlspecialchars($product['name']) ?></h6>

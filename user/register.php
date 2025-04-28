@@ -3,7 +3,7 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$database = "iti";
+$database = "cafeteriaDB";
 
 $conn = mysqli_connect($servername, $username, $password, $database);
 
@@ -23,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Handle image upload
     if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
-        $image = 'uploads/' . basename($_FILES['image']['name']);
+        $image = '../uploads/' . basename($_FILES['image']['name']);
         move_uploaded_file($_FILES['image']['tmp_name'], $image);
     } else {
         $image = null; // No image uploaded
