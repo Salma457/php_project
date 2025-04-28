@@ -36,10 +36,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Handle file upload
     $image_path = null;
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-        $upload_dir = 'uploads/';  // Correct path to uploads folder
+        $upload_dir = '../uploads';  // Correct path to uploads folder
         $file_name = basename($_FILES['image']['name']);  // Get the original file name
         $file_name = preg_replace("/[^a-zA-Z0-9\._-]/", "", $file_name);  // Clean up the file name
-        $target_path = $upload_dir . '/' . $file_name;
+        $target_path = $upload_dir . $file_name;  // Set the target path
 
         // Check if image file is an actual image
         $check = getimagesize($_FILES['image']['tmp_name']);
@@ -49,7 +49,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
         
-        
+        // Check file size (max 2MB)
+        // if ($_FILES['image']['size'] > 2000000) {
+        //     $_SESSION['product_error'] = "Image size must be less than 2MB";
+        //     header("Location: add_product.php");
+        //     exit();
+        // }
         
         // Allow certain file formats
         $imageFileType = strtolower(pathinfo($target_path, PATHINFO_EXTENSION));

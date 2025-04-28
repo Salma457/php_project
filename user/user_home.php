@@ -144,10 +144,14 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
         }
         
         .latest-orders {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        position: sticky;
+        top: 20px;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+    }
         .pagination {
     margin-top: 20px;
 }
@@ -221,7 +225,7 @@ $categories = mysqli_fetch_all($categories_result, MYSQLI_ASSOC);
      data-product-id="<?php echo $product['id']; ?>"
      data-product-price="<?php echo number_format($product['price'], 2, '.', ''); ?>">
     <div class="card h-100">
-        <img src="<?php echo 'http://localhost/php_project/' . htmlspecialchars($product['image']); ?>" class="card-img-top product-img">
+                                    <img src="<?php echo 'http://localhost/php_project/uploads/' . htmlspecialchars($product['image']); ?>" class="card-img-top product-img">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-start">
                 <h5 class="card-title mb-1"><?php echo htmlspecialchars($product['name']); ?></h5>
