@@ -4,10 +4,9 @@ include '../connetionDB/config.php';
 $name        = 'Salma Hussein';
 $email       = 's22@gmail.com';
 $password    = password_hash('s12345', PASSWORD_DEFAULT);
-$room_number = '2020';
+$room_number = '2002';
 $image       = 'salma.jpg';
-$role        = 'admin';
-
+$role        = 'user';
 
 $sql = "INSERT INTO users (name, email, password, room_number, image, role)
         VALUES (?, ?, ?, ?, ?, ?)";
