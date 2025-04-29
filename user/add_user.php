@@ -2,7 +2,7 @@
 include '../connetionDB/config.php'; 
 
 $name        = 'Salma Hussein';
-$email       = 's22@gmail.com';
+$email       = 'admin@gmail.com';
 $password    = password_hash('s12345', PASSWORD_DEFAULT);
 $room_number = '2002';
 $image       = 'salma.jpg';
