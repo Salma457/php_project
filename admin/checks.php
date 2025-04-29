@@ -1,3 +1,19 @@
+
+
+
+<?php
+session_start();
+require_once '../connetionDB/config.php';
+
+
+?>
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -19,7 +35,7 @@
         
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(-45deg, #f8f9fa, #e9ecef, #dee2e6, #ced4da);
+            background: linear-gradient(-45deg,rgb(6, 65, 26),rgb(102, 12, 12),rgb(9, 7, 41),rgb(27, 53, 78));
             background-size: 400% 400%;
             min-height: 100vh;
             padding: 20px 0;
@@ -242,7 +258,7 @@
             font-weight: 600;
             letter-spacing: 0.5px;
             transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: 0 5px 20px rgba(67, 97, 238, 0.3);
+            box-shadow: 0 5px 20px rgba(7, 15, 49, 0.3);
             text-transform: uppercase;
             font-size: 0.85rem;
             color: white;
@@ -408,11 +424,18 @@
             opacity: 1;
             visibility: visible;
         }
+.vv{
+
+    background-color: rgba(213, 228, 208, 0.1) !important;
+}
+        
     </style>
 </head>
 <body>
+<!-- <div class="vv"> <?php include '../admin/includes/navbar.php'; ?>    </div> -->
 
     <div class="container">
+    
         <h1><i class="fas fa-file-invoice-dollar floating" style="margin-right: 15px;"></i>Checks Dashboard</h1>
 
         <form method="GET">
@@ -455,7 +478,7 @@
         <h2><i class="fas fa-users" style="margin-right: 12px;"></i>Users</h2>
         <div class="accordion" id="userAccordion">
             <?php
-            include('../connetionDB/config.php');
+            
 
             $date_from = isset($_GET['date_from']) ? $_GET['date_from'] : '';
             $date_to = isset($_GET['date_to']) ? $_GET['date_to'] : '';

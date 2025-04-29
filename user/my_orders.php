@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
-
+$activePage = basename($_SERVER['PHP_SELF']);
 $userId = $_SESSION['user_id'];
 
 $itemsPerPage = 5;
@@ -131,6 +131,9 @@ function buildPaginationUrl($page, $dateFrom, $dateTo) {
     }
     return '?' . http_build_query($queryParams);
 }
+$activePage = basename($_SERVER['PHP_SELF']);
+
+$user = isset($_SESSION['user']) ? $_SESSION['user'] : ['name' => 'Guest'];
 
 ?>
 
@@ -348,9 +351,104 @@ function buildPaginationUrl($page, $dateFrom, $dateTo) {
         .accordion-button:hover .order-summary > div {
             color: #0a58ca;
         }
+        .navbar {
+            background-color: #4285f4; /* Blue background */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            color: #fff !important; /* White text for brand */
+        }
+
+        .navbar-nav .nav-link {
+            color: #fff !important; /* White text for links */
+            font-size: 1rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #f1f1f1 !important; /* Lighter white on hover */
+        }
+
+        .navbar-nav .nav-link.active {
+            border-bottom: 2px solid #fff; /* Highlight active link */
+        }
     </style>
 </head>
 <body>
+
+
+<?php
+// Define active page and user data
+$activePage = basename($_SERVER['PHP_SELF']);
+session_start();
+$user = isset($_SESSION['user']) ? $_SESSION['user'] : ['name' => 'Guest'];
+?>
+
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="user_home.php">
+            <i class="fas fa-utensils"></i>Cafeteria
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link <?php echo $activePage === 'user_home.php' ? 'active' : ''; ?>" href="user_home.php">
+                        <i class="fas fa-home me-1"></i>Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?php echo $activePage === 'my_orders.php' ? 'active' : ''; ?>" href="my_orders.php">
+                        <i class="fas fa-receipt me-1"></i>My Orders
+                    </a>
+                </li>
+            </ul>
+            <div class="d-flex align-items-center">
+                <span class="welcome-text">
+                    <i class="fas fa-user-circle"></i>Welcome
+                </span>
+                <a href="logout.php" class="btn btn-outline-light">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+
+
+
+
+
+
+
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">Confirm Cancellation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to cancel this order?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                    <button type="button" class="btn btn-danger" id="confirmCancelBtn">Yes, Cancel Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <h1><i class="fas fa-receipt me-2"></i>My Orders</h1>
 
@@ -414,7 +512,7 @@ function buildPaginationUrl($page, $dateFrom, $dateTo) {
                                     <div class="action-column">
                                         <?php if ($order['status'] === 'processing'): ?>
                                             <a href="#" class="btn btn-sm btn-outline-danger btn-cancel"
-                                               onclick="return postCancelOrder('<?php echo $order['id']; ?>', '<?php echo htmlspecialchars($dateFrom ?? ''); ?>', '<?php echo htmlspecialchars($dateTo ?? ''); ?>', '<?php echo $currentPage; ?>');">
+                                               onclick="return showCancelConfirmation('<?php echo $order['id']; ?>', '<?php echo htmlspecialchars($dateFrom ?? ''); ?>', '<?php echo htmlspecialchars($dateTo ?? ''); ?>', '<?php echo $currentPage; ?>');">
                                                 <i class="fas fa-times me-1"></i>Cancel
                                             </a>
                                         <?php else: ?>
@@ -506,23 +604,34 @@ function buildPaginationUrl($page, $dateFrom, $dateTo) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    alert.style.transition = 'opacity 0.5s';
-                    alert.style.opacity = '0';
-                    setTimeout(() => alert.remove(), 500);
-                }, 5000);
-            });
-        });
+        // Store cancellation data globally
+        let cancellationData = {
+            orderId: null,
+            dateFrom: null,
+            dateTo: null,
+            page: null
+        };
 
-        function postCancelOrder(orderId, dateFrom, dateTo, page) {
-            if (!confirm('Are you sure you want to cancel this order?')) return false;
+        // Show confirmation modal
+        function showCancelConfirmation(orderId, dateFrom, dateTo, page) {
+            cancellationData = {
+                orderId: orderId,
+                dateFrom: dateFrom,
+                dateTo: dateTo,
+                page: page
+            };
+            
+            const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+            modal.show();
+            
+            return false; // Prevent default action
+        }
 
+        // Handle confirmation button click
+        document.getElementById('confirmCancelBtn').addEventListener('click', function() {
             const formData = new FormData();
             formData.append('action', 'cancel');
-            formData.append('order_id', orderId);
+            formData.append('order_id', cancellationData.orderId);
 
             fetch('cancellation_order.php', {
                 method: 'POST',
@@ -536,9 +645,9 @@ function buildPaginationUrl($page, $dateFrom, $dateTo) {
              })
             .then(data => {
                 console.log('Cancellation response:', data);
-                let redirectUrl = 'my_orders.php?page=' + page;
-                if (dateFrom) redirectUrl += '&date_from=' + encodeURIComponent(dateFrom);
-                if (dateTo) redirectUrl += '&date_to=' + encodeURIComponent(dateTo);
+                let redirectUrl = 'my_orders.php?page=' + cancellationData.page;
+                if (cancellationData.dateFrom) redirectUrl += '&date_from=' + encodeURIComponent(cancellationData.dateFrom);
+                if (cancellationData.dateTo) redirectUrl += '&date_to=' + encodeURIComponent(cancellationData.dateTo);
 
                 window.location.href = redirectUrl;
             })
@@ -546,9 +655,26 @@ function buildPaginationUrl($page, $dateFrom, $dateTo) {
                  console.error('Error during cancellation:', error);
                  alert('An error occurred while cancelling the order. Details: ' + error.message);
             });
+            
+            // Hide the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
+            modal.hide();
+        });
 
-            return false;
-        }
+        document.addEventListener('DOMContentLoaded', function () {
+            const alertElement = document.getElementById('dynamic-alert');
+            if (alertElement) {
+                setTimeout(() => {
+                    // Bootstrap's built-in method to close the alert
+                    const alert = bootstrap.Alert.getInstance(alertElement);
+                    if (alert) {
+                        alert.close();
+                    } else {
+                        alertElement.style.display = 'none'; // Fallback
+                    }
+                }, 1000); // 1 second
+            }
+        });
     </script>
 </body>
 </html>

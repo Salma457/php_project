@@ -44,80 +44,98 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #f5f6fa;
-            height: 100vh;
+            background: linear-gradient(to right, #6c5ce7, #a29bfe);
+            min-height: 100vh;
             display: flex;
             align-items: center;
+            justify-content: center;
         }
-        
         .login-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            padding: 40px;
             width: 100%;
             max-width: 400px;
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
-        
-        .login-header {
-            background-color: #6c5ce7;
-            color: white;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-            padding: 20px;
+        .login-title {
+            font-weight: bold;
+            margin-bottom: 20px;
             text-align: center;
+            color: #6c5ce7;
         }
-        
-        .login-body {
-            padding: 30px;
-            background-color: white;
-            border-bottom-left-radius: 10px;
-            border-bottom-right-radius: 10px;
-        }
-        
         .btn-login {
             background-color: #6c5ce7;
-            color: white;
+            border: none;
         }
-        
         .btn-login:hover {
-            background-color: #5649d2;
-            color: white;
+            background-color: #5a4dcf;
+        }
+        .form-control:focus {
+            border-color: #6c5ce7;
+            box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="login-card mx-auto">
-                    <div class="login-header">
-                        <h3>Cafeteria</h3>
-                    </div>
-                    <div class="login-body">
-                        <?php if ($error): ?>
-                            <div class="alert alert-danger"><?php echo $error; ?></div>
-                        <?php endif; ?>
-                        <form method="POST">
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
-                            </div>
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-login">Login</button>
-                            </div>
-                            <div class="mt-3 text-center">
-                                <a href="forgot_password.php">Forgot Password?</a>
-                            </div>
-                        </form>
-                    </div>
+    <div class="login-card">
+        <h2 class="login-title">Login to Cafeteria</h2>
+        <?php if ($error): ?>
+            <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
+        <?php endif; ?>
+        <form class="needs-validation" method="POST" novalidate>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email address</label>
+                <input 
+                    type="email" 
+                    class="form-control" 
+                    id="email" 
+                    name="email" 
+                    required
+                >
+                <div class="invalid-feedback">
+                    Please enter a valid email address.
                 </div>
             </div>
-        </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input 
+                    type="password" 
+                    class="form-control" 
+                    id="password" 
+                    name="password" 
+                    required
+                    minlength="6"
+                >
+                <div class="invalid-feedback">
+                    Please enter your password (at least 6 characters).
+                </div>
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-login">Login</button>
+            </div>
+            <div class="mt-3 text-center">
+                <a href="forget_password.php" class="text-decoration-none">Forgot Password?</a>
+            </div>
+        </form>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Bootstrap validation
+        (() => {
+          'use strict'
+          const forms = document.querySelectorAll('.needs-validation')
+          Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+              if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+              }
+              form.classList.add('was-validated')
+            }, false)
+          })
+        })()
+    </script>
 </body>
 </html>
