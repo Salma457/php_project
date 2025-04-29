@@ -96,9 +96,9 @@ $categories_result = mysqli_query($conn, $categories_query);
                                         <option value="<?= $category['id'] ?>"><?= htmlspecialchars($category['name']) ?></option>
                                     <?php endwhile; ?>
                                 </select>
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-                                    <i class="fas fa-plus"></i> Add New
-                                </button>
+                                <a href="add_category.php" class="btn btn-outline-primary">
+            <i class="fas fa-plus"></i> Add New Category
+        </a>
                             </div>
                         </div>
                         
