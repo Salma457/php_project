@@ -75,6 +75,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-color: #6c5ce7;
             box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25);
         }
+        .register-link {
+    color: #6c5ce7;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.register-link:hover {
+    color: #4834d4;
+    text-decoration: underline;
+}
+
     </style>
 </head>
 <body>
@@ -116,6 +128,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
             <div class="mt-3 text-center">
                 <a href="forget_password.php" class="text-decoration-none">Forgot Password?</a>
+                <a href="register.php" class="text-decoration-none">Don't have an account? Register here</a>
+
             </div>
         </form>
     </div>
