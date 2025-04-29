@@ -237,9 +237,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="mb-3">
                 <label for="role" class="form-label">Role</label>
                 <select class="form-control" id="role" name="role">
-                    <option value="" <?php echo empty($role) ? 'selected' : ''; ?>>Select Role</option>
                     <option value="user" <?php echo $role === 'user' ? 'selected' : ''; ?>>User</option>
-                    <option value="admin" <?php echo $role === 'admin' ? 'selected' : ''; ?>>Admin</option>
                 </select>
                 <div class="error-message"><?php echo $roleErr; ?></div>
             </div>

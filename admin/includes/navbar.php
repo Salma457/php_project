@@ -12,9 +12,7 @@ $is_admin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <?php if ($is_admin): ?>
-                <li class="nav-item">
-                    <a class="nav-link" href="dashboard.php">Dashboard</a>
-                </li>
+               
                 <li class="nav-item">
                     <a class="nav-link active" href="../admin/manual_order.php">Manual Order</a>
                 </li>

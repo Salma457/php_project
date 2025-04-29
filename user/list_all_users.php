@@ -48,7 +48,7 @@ if (!$result) {
 
 <div class="container py-5">
 <a href="../admin/adduser.php" class="btn btnadd" >
-            <i class="fas fa-plus-circle me-2" styles="margin-bottom: 50px;"></i>create product
+            <i class="fas fa-plus-circle me-2" styles="margin-bottom: 50px;"></i>Add User
            
    
 </a>
